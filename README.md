@@ -58,8 +58,7 @@ We follow the protocol described in the paper using the Low-Dose CT and Projecti
 ### Anatomical Segmentation Model Preparation
 The LAP loss uses a pre-trained head CT segmentation model : [Fully Automated Segmentation of Head CT Neuroanatomy Using Deep Learning](https://doi.org/10.1148/ryai.2020190183)
 This project is implemented in [github page](https://github.com/jasonccai/HeadCTSegmentation) with Tensorflow.
-
-We reimplement this project into pytorch. Download [converted model weight](https://1drv.ms/u/c/7ecb33c3ddef116b/ETvrNGKp4utIhgp--vaTf0EBqNVP2QVE7AYwAbv0QP8ecg?e=iZYhgz) and place it `Model/Anatomical_Segmentation/model.pth`.
+So we re-implement this project into pytorch, download the [converted model weight](https://1drv.ms/u/c/7ecb33c3ddef116b/ETvrNGKp4utIhgp--vaTf0EBqNVP2QVE7AYwAbv0QP8ecg?e=iZYhgz) and place it in `Model/Anatomical_Segmentation/model.pth`.
 
 ## Training
 
