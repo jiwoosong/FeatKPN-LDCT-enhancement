@@ -152,13 +152,11 @@ def get_Full_Denoising_Loader(args):
         with open(args.subject_path, 'rb') as f:
             train_list, val_list = pickle.load(f)
         print(jutil.str_100('Load Subject Lists'))
-        print('Train : %d'%(len(train_list)))
-        print('Val : %d' % (len(val_list)))
     else:
         print(jutil.str_100('No Subject Lists!'))
-        subjects_list = sorted(jutil.listdir(brain_path))
+        subjects_list = sorted(os.listdir(brain_path))
         np.random.seed(42)
-        subjects_list = list(np.random.permutation(subjects_list))
+        subjects_list = np.random.permutation(subjects_list).tolist()
         print('NP random order : %s' % (str(subjects_list[0:5])))
         train_list = subjects_list[:int(len(subjects_list)*0.8)]
         del subjects_list[:int(len(subjects_list)*0.8)]
@@ -168,9 +166,10 @@ def get_Full_Denoising_Loader(args):
         with open(args.subject_path, 'wb') as f:
             pickle.dump((train_list, val_list), f)
 
-    train_list = [p.replace(r'/home/heuron/Desktop/Projects/NCCT_ADE_KPN/Data', r'C:\Users\adren\Downloads\Backup\A\NCCT_ADE_KPN\Data') for p in train_list]
-    val_list = [p.replace(r'/home/heuron/Desktop/Projects/NCCT_ADE_KPN/Data',
-                            r'C:\Users\adren\Downloads\Backup\A\NCCT_ADE_KPN\Data') for p in val_list]
+    train_list = [os.path.join(brain_path, item) for item in train_list if os.path.exists(os.path.join(brain_path, item))]
+    val_list = [os.path.join(brain_path, item) for item in val_list if os.path.exists(os.path.join(brain_path, item))]
+    print('Train : %d'%(len(train_list)))
+    print('Val : %d' % (len(val_list)))
 
     train_loader = Denoising_Loader(args, mode='train', subject_list = train_list)
     train_loader = torch.utils.data.DataLoader(train_loader,
@@ -191,8 +190,8 @@ def get_Full_Denoising_Loader(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data_path', type=str, default=r'Data/3_NIFTI_Processed_Data')
-    parser.add_argument('--subject_path', type=str, default=r'Data/3_NIFTI_Processed_Data/train_val_split.pickle')
+    parser.add_argument('--data_path', type=str, default=r'Data/')
+    parser.add_argument('--subject_path', type=str, default=r'Data/train_val_split.pickle')
     parser.add_argument('--pin_memory', type=bool, default=True)
     parser.add_argument('--batch_size', type=int, default=20)
     parser.add_argument('--num_workers', type=int, default=0)

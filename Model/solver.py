@@ -1,3 +1,4 @@
+import gc
 import os
 import argparse
 
@@ -42,13 +43,13 @@ class ADE_solver(pl.LightningModule):
         self.ssim_l1_criterion = MS_SSIM_L1_LOSS()
         self.compound_criterion = CompoundLoss()
         self.anatomical_criterion = Anatomical_Loss(w_p = args.ana_model_path)
+        self.outputs = []
 
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.hparams['lr'])
         lr_scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer=optimizer,
                                                          lr_lambda=lambda epoch: self.hparams['lrdecay'] ** epoch,
-                                                         last_epoch=-1,
-                                                         verbose=False)
+                                                         last_epoch=-1)
 
         # lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=70, eta_min=1e-6)
         return [optimizer], [lr_scheduler]
@@ -111,9 +112,10 @@ class ADE_solver(pl.LightningModule):
         x, y = batch['LDCT'], batch['NDCT']
         pred = self(x)
         confusion = self.anatomical_criterion(pred,y, 'Confusion')
-        return {'x':x, 'y':y, 'pred':pred, 'confusion':confusion}
+        self.outputs.append({'x':x, 'y':y, 'pred':pred, 'confusion':confusion})
+        # return {'x':x, 'y':y, 'pred':pred, 'confusion':confusion}
 
-    def validation_epoch_end(self, outputs):
+    def on_validation_epoch_end(self):
         Anatomical_Loss_List = []
         confusion_labels = {}
         for label in range(1,18):
@@ -128,7 +130,7 @@ class ADE_solver(pl.LightningModule):
         SSIM1_List = []
         SSIM2_List = []
         cnt=0
-        for item in outputs:
+        for item in self.outputs:
             y_1 = window_denormalize(item['y'], window=self.args.window[0], tgt_window=(0, 80))
             pred_1 = window_denormalize(item['pred'], window=self.args.window[0], tgt_window=(0, 80))
             y_2 = window_denormalize(item['y'], window=self.args.window[0], tgt_window=(-1024, 3072))
@@ -197,4 +199,9 @@ class ADE_solver(pl.LightningModule):
         self.logger.experiment.add_scalar('val/(FR)Avg_PSNR', Avg_PSNR2, global_step=self.current_epoch)
         self.log('val/(FR)Avg_SSIM', Avg_SSIM2, on_step=False, on_epoch=True, prog_bar=True, logger=False)
         self.logger.experiment.add_scalar('val/(FR)Avg_SSIM', Avg_SSIM2, global_step=self.current_epoch)
+
+
+        self.outputs=[]
+        gc.collect()
+        torch.cuda.empty_cache()
 
