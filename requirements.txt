@@ -4,7 +4,7 @@ torchaudio==2.3.0+cu121
 torchvision==0.18.0+cu121
 
 termcolor
-albumentations
+albumentations==1.2.1
 opencv-python
 
 nibabel
