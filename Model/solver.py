@@ -26,6 +26,14 @@ class ADE_solver(pl.LightningModule):
         self.args = args
         self.save_hyperparameters(args)
 
+        # Set Loss
+        self.l2_criterion = nn.MSELoss()
+        self.l1_criterion = nn.L1Loss()
+        self.ssim_l1_criterion = MS_SSIM_L1_LOSS()
+        self.compound_criterion = CompoundLoss()
+        self.anatomical_criterion = Anatomical_Loss(w_p = args.ana_model_path)
+        self.outputs = []
+
         # Set Model
         if self.args.model_name == 'KPNFeat':
             from Model.KPN.kpn_feat_model import KPNfeat
@@ -36,14 +44,9 @@ class ADE_solver(pl.LightningModule):
         elif self.args.model_name == 'EDCNN':
             from Model.EDCNN.edcnn_model import EDCNN
             self.model = EDCNN()
-
-        # Set Loss
-        self.l2_criterion = nn.MSELoss()
-        self.l1_criterion = nn.L1Loss()
-        self.ssim_l1_criterion = MS_SSIM_L1_LOSS()
-        self.compound_criterion = CompoundLoss()
-        self.anatomical_criterion = Anatomical_Loss(w_p = args.ana_model_path)
-        self.outputs = []
+        elif self.args.model_name == 'SGDNet':
+            from Model.SGDNET.sgdnet import SGDNet
+            self.model = SGDNet(anatomical_criterion.model)
 
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.hparams['lr'])
